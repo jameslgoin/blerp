@@ -27,12 +27,14 @@ package joannamazer.blerp;
         import android.widget.LinearLayout;
         import android.widget.TextView;
         import android.widget.Toast;
+
+        import java.io.IOException;
         import java.math.RoundingMode;
         import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
-    AudioTrack audioTrack, tone;
+    AudioTrack tone, mAudioTrack;
     ImageButton toggleTone;
 
     SensorManager sensorManager;
@@ -48,20 +50,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView angle_name_TV, angle_val_TV, angle_unit_TV;
     Toolbar TB;
     ImageView pointerImage;
-    DecimalFormat df, dff, dfff;
+    DecimalFormat df, dff;
 
     int updateCount = 0;
     boolean refresh = false;
-    int duration = 1; // seconds
-    int sampleRate = 8000;
+
     double freqOfTone = 440; // hz
-    int durOfTone = 250;
+    int durOfTone = 250; // ms
     float mCurrentDegree = 0f;
+    int sampleRate = 44100;
 
-    int numSamples = duration * sampleRate;
 
-    byte gen_sound[] = new byte[2 * numSamples];
-    double sample[] = new double[numSamples];
+
+
 
     boolean switchState = false;
     boolean mLastAccelerometerSet = false;
@@ -71,8 +72,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     float[] mLastMagnetometer = new float[3];
     float[] mR = new float[9];
     float[] mOrientation = new float[3];
-
-
+    int minTrackBufferSize;
+    AudioTrack audioTrack;
+    PlaySound sineWave;
 
 
 
@@ -92,10 +94,58 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         pointerImage = findViewById(R.id.pointer);
 
         setupViews();
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, gen_sound.length, AudioTrack.MODE_STATIC);
-        generateTone();
-        audioTrack.write(gen_sound, 0, gen_sound.length);
+        tone = generateTone(freqOfTone, durOfTone);
         freq_val_TV.setText(Double.toString(freqOfTone));
+        sineWave = new PlaySound();
+        sineWave.genTone(freqOfTone, durOfTone);
+
+
+    }
+
+    public void setupViews() {
+
+        toggleTone = this.findViewById(R.id.toggleButton);
+        toggleTone.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+
+
+        freq_name_TV = this.findViewById(R.id.textView_1);
+        freq_val_TV = this.findViewById(R.id.frequencyVal);
+        freq_unit_TV = this.findViewById(R.id.textView11);
+
+        gx_name_TV = this.findViewById(R.id.textView_3);
+        gx_val_TV = this.findViewById(R.id.gx_value);
+        gx_unit_TV = this.findViewById(R.id.gx_unit);
+
+        gy_name_TV = this.findViewById(R.id.textView_4);
+        gy_val_TV = this.findViewById(R.id.gy_value);
+        gy_unit_TV = this.findViewById(R.id.gy_unit);
+
+        gz_name_TV = this.findViewById(R.id.textView_5);
+        gz_val_TV = this.findViewById(R.id.gz_value);
+        gz_unit_TV = this.findViewById(R.id.gz_unit);
+
+        bx_name_TV = this.findViewById(R.id.textView_7);
+        bx_val_TV = this.findViewById(R.id.bx_value);
+        bx_unit_TV = this.findViewById(R.id.bx_unit);
+
+        by_name_TV = this.findViewById(R.id.textView_8);
+        by_val_TV = this.findViewById(R.id.by_value);
+        by_unit_TV = this.findViewById(R.id.by_unit);
+
+        bz_name_TV = this.findViewById(R.id.textView_9);
+        bz_val_TV = this.findViewById(R.id.bz_value);
+        bz_unit_TV = this.findViewById(R.id.bz_unit);
+
+        angle_name_TV = this.findViewById(R.id.textView29);
+        angle_val_TV = this.findViewById(R.id.textView30);
+        angle_unit_TV = this.findViewById(R.id.degrees_unit);
+
+
+        df = new DecimalFormat("000.0");
+        df.setRoundingMode(RoundingMode.CEILING);
+        dff = new DecimalFormat("00.00");
+        dff.setRoundingMode(RoundingMode.CEILING);
+
 
     }
 
@@ -140,12 +190,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         if (CID == 0) {
                             durOfTone = Integer.parseInt(input.getText().toString());
                             Toast.makeText(getApplicationContext(), "Duration: " + durOfTone + " ms", Toast.LENGTH_SHORT).show();
-
                         } else {
                             freqOfTone = Double.parseDouble(input.getText().toString());
                             freq_val_TV.setText(Double.toString(freqOfTone));
                             Toast.makeText(getApplicationContext(), "Frequency: " + freqOfTone + " Hz", Toast.LENGTH_SHORT).show();
                         }
+                        sineWave.genTone(freqOfTone, durOfTone);
                         dialog.dismiss();
                     }
                 });
@@ -226,57 +276,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-    }
+    public void onAccuracyChanged(Sensor sensor, int i) {}
 
 
-    public void setupViews() {
-
-        toggleTone = this.findViewById(R.id.toggleButton);
-        toggleTone.setImageResource(R.drawable.ic_play_arrow_black_24dp);
-
-
-        freq_name_TV = this.findViewById(R.id.textView_1);
-        freq_val_TV = this.findViewById(R.id.frequencyVal);
-        freq_unit_TV = this.findViewById(R.id.textView11);
-
-        gx_name_TV = this.findViewById(R.id.textView_3);
-        gx_val_TV = this.findViewById(R.id.gx_value);
-        gx_unit_TV = this.findViewById(R.id.gx_unit);
-
-        gy_name_TV = this.findViewById(R.id.textView_4);
-        gy_val_TV = this.findViewById(R.id.gy_value);
-        gy_unit_TV = this.findViewById(R.id.gy_unit);
-
-        gz_name_TV = this.findViewById(R.id.textView_5);
-        gz_val_TV = this.findViewById(R.id.gz_value);
-        gz_unit_TV = this.findViewById(R.id.gz_unit);
-
-        bx_name_TV = this.findViewById(R.id.textView_7);
-        bx_val_TV = this.findViewById(R.id.bx_value);
-        bx_unit_TV = this.findViewById(R.id.bx_unit);
-
-        by_name_TV = this.findViewById(R.id.textView_8);
-        by_val_TV = this.findViewById(R.id.by_value);
-        by_unit_TV = this.findViewById(R.id.by_unit);
-
-        bz_name_TV = this.findViewById(R.id.textView_9);
-        bz_val_TV = this.findViewById(R.id.bz_value);
-        bz_unit_TV = this.findViewById(R.id.bz_unit);
-
-        angle_name_TV = this.findViewById(R.id.textView29);
-        angle_val_TV = this.findViewById(R.id.textView30);
-        angle_unit_TV = this.findViewById(R.id.degrees_unit);
-
-
-        df = new DecimalFormat("000.0");
-        df.setRoundingMode(RoundingMode.CEILING);
-        dff = new DecimalFormat("00.00");
-        dff.setRoundingMode(RoundingMode.CEILING);
-        dfff = new DecimalFormat("00.000");
-        dfff.setRoundingMode(RoundingMode.CEILING);
-
-    }
 
 
     private AudioTrack generateTone(double freqHz, int durationMs) {
@@ -293,6 +295,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             short sample = (short)(Math.sin(2 * Math.PI * phaseChange * i / (44100.0 / freqHz)) * 0x7FFF);
             samples[i] = sample;
         }
+
         AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
                 AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
                 count*2 * (Short.SIZE / 8), AudioTrack.MODE_STATIC);
@@ -300,16 +303,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return track;
     }
 
+
     public void toggleSwitchStatus(View view) {
         switchState = !switchState;
         if (switchState) {
             toggleTone.setImageResource(R.drawable.ic_stop_black_24dp);
-            tone = generateTone(freqOfTone, durOfTone);
-            playTone();
+            sineWave.playSound(true);
+
 
         } else {
             toggleTone.setImageResource(R.drawable.ic_play_arrow_black_24dp);
-            stopTone();
+            sineWave.playSound(false);
         }
     }
 
@@ -318,40 +322,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         tone.reloadStaticData();
         tone.setLoopPoints(0, count*2, -1);
         tone.play();
+
+
     }
 
     void stopTone() {
         tone.stop();
     }
 
-    void generateTone() {
 
-        for (int i = 0; i < numSamples; ++i) {
-            if (i < (numSamples/4)) {
-                sample[i] = Math.sin(2 * Math.PI * i / (sampleRate / freqOfTone));
-            } else if ((i >= (numSamples/2)) && (i < (3*numSamples/4))) {
-                sample[i] = Math.sin(2 * Math.PI * i / (sampleRate / freqOfTone));
-            } else {
-                sample[i] = 0;
-            }
-        }
-
-        // convert to 16 bit pcm sound array (assume buffer is normalized)
-        int idx = 0;
-        for (double dVal : sample) {
-            short val = (short) ((dVal * 32767));               // scale to maximum amplitude
-            gen_sound[idx++] = (byte) (val & 0x00ff);           // in 16 bit wav PCM, first byte is the low order byte
-            gen_sound[idx++] = (byte) ((val & 0xff00) >>> 8);
-        }
-    }
-
-    void playSound() {
-        audioTrack.reloadStaticData();
-        audioTrack.setLoopPoints(0, numSamples, -1);
-        audioTrack.play();
-    }
-
-    void stopSound() {
-        audioTrack.stop();
-    }
 }
