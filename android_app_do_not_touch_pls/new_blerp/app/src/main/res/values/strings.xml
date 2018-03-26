@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">BLERP</string>
+    <string name="app_title">BLE Relative Positioning</string>
+    <string name="textView_1">Frequency </string>
+    <string name="textView_2">ACCELEROMETER</string>
+    <string name="textView_3">Acceleration_x </string>
+    <string name="textView_4">Acceleration_y </string>
+    <string name="textView_5">Acceleration_z </string>
+    <string name="textView_6">MAGNETOMETERS</string>
+    <string name="textView_7">MagneticField_x </string>
+    <string name="textView_8">MagneticField_y </string>
+    <string name="textView_9">MagneticField_z </string>
+    <string name="textView_10">OrientationAngle  </string>
+    <string name="textView_11">[Hz]</string>
+    <string name="textView_12"> -------- </string>
+    <string name="G_units"> [m/s^2] </string>
+    <string name="B_units"> [µT] </string>
+    <string name="degrees_units"> [deg] </string>
+    <string name="compass_image_description"> positioning compass image </string>
+    <string name="edit_button_description"> edit frequency </string>
+    <string name="play_button_description"> play tone </string>
+
+
+
+
+    <string name="action_settings">settings</string>
+    <string name="frequency_dialog_message">Audio frequency in Hz</string>
+    <string name="timing_dialog_message">Audio duration in ms</string>
+
+
+
+    <string name="edit_button">EDIT</string>
+
+
+
+</resources>
