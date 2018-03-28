@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="duration">1</integer>
+    <integer name="sample_rate">8000</integer>
+    <integer name="frequency_default">440</integer>
+    <integer name="current_degree">0</integer>
+
+
+</resources>
